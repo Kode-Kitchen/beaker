@@ -262,7 +262,7 @@ function rBlankScreen () {
     (!info.description && info.isOwner) ? yo`<em>Choose a description</em>` : info.description
   const editable = inner =>
     (info.isOwner) ? yo`<div><div class="editable" onclick=${onUpdate}>${inner}</div></div>` : inner
-  const onUpdate = () => selectedArchive.updateManifest()
+  const onUpdate = () => beaker.archives.updateManifest(selectedArchive.url)
   return yo`
     <div id="editor-viewer" class="active">
       <div class="editor-blank-screen">
@@ -343,7 +343,7 @@ async function onNewFolder (e) {
     path: e.detail ? e.detail.path : ''
   })
   try {
-    await selectedArchive.createDirectory(path)
+    await selectedArchive.mkdir(path)
     update()
   } catch (e) {
     alert('' + e)
@@ -390,9 +390,9 @@ async function onImportFiles (e) {
   }
 
   // import
-  await Promise.all(files.map(srcPath => {
+  await Promise.all(files.map(src => {
     // send to backend
-    return DatArchive.importFromFilesystem({srcPath, dst, inplaceImport: false})
+    return DatArchive.importFromFilesystem({src, dst, inplaceImport: false})
   }))
   toast.create(`Imported ${files.length} ${files.length > 1 ? 'files' : 'file'}.`)
 }
@@ -531,7 +531,7 @@ async function generate (archive, path, content='') {
   model.onDidChangeContent(onDidChangeContent(model, archive, path))
   model.updateOptions(getModelOptions())
   dirtyFiles[url] = true
-  archive.fileTree.addNode({ type: 'file', name: path })
+  archive.fileTree.addNode({name: path, isFile: ()=>true, isDirectory: ()=>false})
   return model
 }
 

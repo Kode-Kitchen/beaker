@@ -54,18 +54,11 @@ export default {
     return res.url
   },
 
-  async updateManifest(url, {title, description} = {}) {
-    // initiate the modal
-    var win = BrowserWindow.fromWebContents(this.sender)
-    await assertSenderIsFocused(this.sender)
-    return await showModal(win, 'create-archive', {url, title, description})
-  },
-
   async loadArchive(url) {
     if (!url || typeof url !== 'string') {
       return Promise.reject(new InvalidURLError())
     }
-    datLibrary.getOrLoadArchive(url)
+    await datLibrary.getOrLoadArchive(url)
     return Promise.resolve(true)
   },
 
@@ -84,7 +77,7 @@ export default {
 
   async stat(url, opts = {}) {
     var { archive, filepath } = lookupArchive(url)
-    var entry = await pda.lookupEntry(archive, filepath, opts)
+    var entry = await pda.stat(archive, filepath, opts)
     return entry
   },
 
@@ -233,7 +226,7 @@ async function assertWritePermission (archive, sender) {
   const perm = ('modifyDat:' + archiveKey)
 
   // ensure we have the archive's private key
-  if (!archive.owner) throw new ArchiveNotWritableError()
+  if (!archive.writable) throw new ArchiveNotWritableError()
 
   // beaker: always allowed
   if (sender.getURL().startsWith('beaker:')) {
@@ -287,7 +280,7 @@ async function assertValidPath (fileOrFolderPath) {
 
 async function assertSenderIsFocused (sender) {
   if (!sender.isFocused()) {
-    throw new UserDeniedError('Application must be focused to spawn the Create Dat prompt')
+    throw new UserDeniedError('Application must be focused to spawn a prompt')
   }
 }
 
